@@ -24,7 +24,7 @@ type postMsg struct {
 	Body   string `json:"body"`
 }
 
-func firstApi(w http.ResponseWriter, r *http.Request) {
+func firstApi(w http.ResponseWriter, _ *http.Request) {
 
 	log.Print("in s1 api")
 
@@ -48,14 +48,20 @@ func firstApi(w http.ResponseWriter, r *http.Request) {
 	log.Print(string(responseData))
 
 	var responseObject postMsg
-	json.Unmarshal(responseData, &responseObject)
+	err = json.Unmarshal(responseData, &responseObject)
+	if err != nil {
+		return
+	}
 
 	fmt.Println(responseObject.Body)
 
 	res := responseMsg{
 		MsgText: name,
 	}
-	json.NewEncoder(w).Encode(res)
+	err = json.NewEncoder(w).Encode(res)
+	if err != nil {
+		return
+	}
 
 }
 
@@ -74,16 +80,15 @@ func connectFb() string {
 
 	// create a database object which can be used
 	// to connect with database.
-	db, err := sql.Open("mysql", "test:test@tcp(0.0.0.0:3306)/test")
+	db, err := sql.Open(
+		"mysql",
+		"test:test@tcp(0.0.0.0:3306)/test")
 
 	// handle error, if any.
 	if err != nil {
 		panic(err)
 	}
 
-	// Now its time to connect with oru database,
-	// database object has a method Ping.
-	// Ping returns error, if unable connect to database.
 	err = db.Ping()
 
 	// handle error
@@ -93,17 +98,12 @@ func connectFb() string {
 
 	fmt.Print("Pong\n")
 
-	// Here a SQL query is used to return all
-	// the data from the table user.
 	result, err := db.Query("SELECT * FROM test WHERE idTest = ?", 1)
 
 	// handle error
 	if err != nil {
 		panic(err)
 	}
-
-	// the result object has a method called Next,
-	// which is used to iterate throug all returned rows.
 
 	for result.Next() {
 
@@ -129,7 +129,12 @@ func connectFb() string {
 	// which is used to free the resource.
 	// Free the resource when the function
 	// is returned.
-	defer db.Close()
+	defer func(db *sql.DB) {
+		err := db.Close()
+		if err != nil {
+
+		}
+	}(db)
 
 	return myName
 }
