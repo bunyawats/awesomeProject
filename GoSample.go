@@ -133,3 +133,5 @@ func connectFb() string {
 
 	return myName
 }
+
+// grpcui -plaintext -proto helloworld.proto  localhost:50051
