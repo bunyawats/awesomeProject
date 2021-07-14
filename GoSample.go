@@ -1,4 +1,3 @@
-
 package main
 
 import (
@@ -8,16 +7,24 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
 	_ "github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 )
 
-type response struct {
-	Title string `json:"message"`
+type responseMsg struct {
+	MsgText string `json:"message"`
 }
 
+type postMsg struct {
+	UserId int    `json:"userId"`
+	Id     int    `json:"id"`
+	Title  string `json:"title"`
+	Body   string `json:"body"`
+}
 
-func  firstApi(w http.ResponseWriter, r *http.Request) {
+func firstApi(w http.ResponseWriter, r *http.Request) {
 
 	log.Print("in s1 api")
 
@@ -27,13 +34,28 @@ func  firstApi(w http.ResponseWriter, r *http.Request) {
 	var name = connectFb()
 	log.Print(name)
 
-	res := response {
-		Title: name,
+	response, err := http.Get("https://jsonplaceholder.typicode.com/posts/1")
+	if err != nil {
+		fmt.Print(err.Error())
+		os.Exit(1)
 	}
-	log.Print(res)
 
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	log.Print(string(responseData))
+
+	var responseObject postMsg
+	json.Unmarshal(responseData, &responseObject)
+
+	fmt.Println(responseObject.Body)
+
+	res := responseMsg{
+		MsgText: name,
+	}
 	json.NewEncoder(w).Encode(res)
-
 
 }
 
@@ -45,7 +67,6 @@ func main() {
 
 	log.Fatal(http.ListenAndServe(":8080", r))
 }
-
 
 func connectFb() string {
 
@@ -103,7 +124,6 @@ func connectFb() string {
 
 		myName = name
 	}
-
 
 	// database object has a method Close,
 	// which is used to free the resource.
